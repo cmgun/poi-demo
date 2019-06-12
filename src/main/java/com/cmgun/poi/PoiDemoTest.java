@@ -49,4 +49,11 @@ public class PoiDemoTest {
         }
         return data;
     }
+
+    /**
+     * 注解模板测试
+     */
+    public static void testAnnotationTemplate() {
+
+    }
 }

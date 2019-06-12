@@ -2,6 +2,7 @@ package com.cmgun.poi;
 
 
 import com.alibaba.excel.EasyExcelFactory;
+import com.alibaba.excel.ExcelReader;
 import com.alibaba.excel.ExcelWriter;
 import com.alibaba.excel.metadata.BaseRowModel;
 import com.alibaba.excel.metadata.Sheet;
@@ -37,6 +38,32 @@ public class PoiUtil {
         ExcelWriter writer = null;
         try {
             InputStream inputStream = getResourcesFileInputStream(templateFileName);
+            out = new FileOutputStream(targetFileName);
+            writer = EasyExcelFactory.getWriterWithTemp(inputStream,out, ExcelTypeEnum.XLSX,true);
+            Sheet sheet1 = new Sheet(1, headLineNum, Entity.class, "第一个sheet", null);
+            sheet1.setStartRow(headLineNum);
+            writer.write(datas, sheet1);
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            // 关闭资源
+            if (writer != null) {
+                writer.finish();
+            }
+            closeOutputStream(out);
+        }
+    }
+
+    /**
+     * 读取excel模板，替换占位符内容
+     */
+    public static void export(String templateFileName, String targetFileName, List<? extends BaseRowModel> datas, int headLineNum) {
+        OutputStream out = null;
+        ExcelWriter writer = null;
+        ExcelReader reader = null;
+        try {
+            InputStream inputStream = getResourcesFileInputStream(templateFileName);
+            reader = EasyExcelFactory.getReader()
             out = new FileOutputStream(targetFileName);
             writer = EasyExcelFactory.getWriterWithTemp(inputStream,out, ExcelTypeEnum.XLSX,true);
             Sheet sheet1 = new Sheet(1, headLineNum, Entity.class, "第一个sheet", null);
