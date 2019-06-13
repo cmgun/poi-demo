@@ -1,32 +1,28 @@
 package com.cmgun.poi;
 
-import com.alibaba.excel.annotation.ExcelProperty;
-import com.alibaba.excel.metadata.BaseRowModel;
-
 import java.util.Date;
 
-public class Entity extends BaseRowModel {
+/**
+ * @author chenqilin
+ * @Date 2019/6/13
+ */
+public class JxlsEntity {
 
-    @ExcelProperty(value = {"id"})
     private long id;
 
-    @ExcelProperty(value = {"msg"})
     private String msg;
 
-    @ExcelProperty(value = {"msg1"})
     private String msg1;
 
-    @ExcelProperty(value = {"msg2"})
     private String msg2;
 
-    @ExcelProperty(value = {"createDate"}, format = "yyyy-MM-dd")
     private Date createDate;
 
     private String strCreateDate;
 
     private String constantVal;
 
-    public Entity(long id, String msg, String constantVal) {
+    public JxlsEntity(long id, String msg, String constantVal) {
         this.id = id;
         this.msg = msg;
         this.msg1 = "msgmsgmsgmsgmsgaaaaaaaaaaa" + "1";
@@ -52,14 +48,6 @@ public class Entity extends BaseRowModel {
         this.msg = msg;
     }
 
-    public Date getCreateDate() {
-        return createDate;
-    }
-
-    public void setCreateDate(Date createDate) {
-        this.createDate = createDate;
-    }
-
     public String getMsg1() {
         return msg1;
     }
@@ -74,6 +62,14 @@ public class Entity extends BaseRowModel {
 
     public void setMsg2(String msg2) {
         this.msg2 = msg2;
+    }
+
+    public Date getCreateDate() {
+        return createDate;
+    }
+
+    public void setCreateDate(Date createDate) {
+        this.createDate = createDate;
     }
 
     public String getStrCreateDate() {
