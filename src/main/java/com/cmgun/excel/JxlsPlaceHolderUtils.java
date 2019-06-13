@@ -17,7 +17,7 @@ public class JxlsPlaceHolderUtils {
     /**
      * cell value的field名称，以c.*开头，)} 或 } 或 , 结尾，*为field名称
      */
-    private static final String CELL_VALUE_PATTERN = ".*c\\.([^)]*),?\\)?}";
+    private static final String CELL_VALUE_PATTERN = ".*c\\.([^),]*),?.*\\)?}";
 
     /**
      * cell里使用了工具类的参数，只处理TranslateUtil和DateUtil两个工具类
