@@ -8,15 +8,13 @@ import com.alibaba.excel.util.POITempFile;
 import com.alibaba.excel.util.TypeUtil;
 import com.alibaba.excel.util.WorkBookUtil;
 import com.alibaba.excel.write.ExcelBuilder;
+import com.cmgun.excel.footer.FooterRow;
 import net.sf.cglib.beans.BeanMap;
 import org.apache.commons.jexl2.Expression;
 import org.apache.commons.jexl2.JexlContext;
 import org.apache.commons.jexl2.JexlEngine;
 import org.apache.commons.jexl2.MapContext;
-import org.apache.poi.ss.usermodel.Cell;
-import org.apache.poi.ss.usermodel.CellStyle;
-import org.apache.poi.ss.usermodel.Row;
-import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
@@ -51,7 +49,7 @@ public class ExcelJxlsTemplateBuilderImpl implements ExcelBuilder {
     /**
      * 模板的footers
      */
-    private List<Row> footers = new ArrayList<>();
+    private List<FooterRow> footers = new ArrayList<>();
 
     /**
      * 列模板样式
@@ -138,8 +136,10 @@ public class ExcelJxlsTemplateBuilderImpl implements ExcelBuilder {
             } else{
                 // 已经读完头部数据，剩下的行属于footer部分，记录后从sheet中清除
                 // 不能存Row对象，会被disconnect TODO
-                footers.add(row);
                 if (row != null) {
+                    FooterRow footerRow = new FooterRow(row.getRowNum());
+
+                    footers.add(row);
                     sheet.removeRow(row);
                 }
             }
@@ -338,4 +338,6 @@ public class ExcelJxlsTemplateBuilderImpl implements ExcelBuilder {
         Row row = WorkBookUtil.createRow(context.getCurrentSheet(), n);
         addJavaObjectToExcel(oneRowData, row);
     }
+
+
 }
