@@ -2,16 +2,18 @@ package com.cmgun.poi;
 
 
 import com.alibaba.excel.EasyExcelFactory;
-import com.alibaba.excel.ExcelReader;
 import com.alibaba.excel.ExcelWriter;
 import com.alibaba.excel.metadata.BaseRowModel;
 import com.alibaba.excel.metadata.Sheet;
 import com.alibaba.excel.support.ExcelTypeEnum;
-import com.cmgun.excel.ExcelFactory;
+import com.cmgun.excel.ExcelTemplateFactory;
 import com.cmgun.excel.ExcelTemplateWriter;
 import org.apache.poi.util.IOUtils;
 
-import java.io.*;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.List;
 
 public class PoiUtil {
@@ -83,7 +85,7 @@ public class PoiUtil {
         try {
             inputStream = getResourcesFileInputStream(templateFileName);
             out = new FileOutputStream(targetFileName);
-            writer = ExcelFactory.getWriterWithTemp(inputStream, out);
+            writer = ExcelTemplateFactory.getWriterWithTemp(inputStream, out);
             writer.write(datas);
         } catch (Exception e) {
             e.printStackTrace();

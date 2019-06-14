@@ -8,6 +8,11 @@ import java.util.regex.Pattern;
 
 /**
  * 兼容jxls-poi-jdk1.6的模板解析方式
+ * 目前只支持一下占位符的解析：
+ * 1. 属性字段，即在${...}中以c.开头的属性字段，
+ *    如 ${c.field}，${translateUtil.getConstantName('Field', c.field)}，${dateUtil.convertToDate(c.field, 'yyyyMMdd')}
+ * 2. translateUtil.getConstantName，常量转换方法
+ * 3. dateUtil.convertToDate，String类型日期的格式转换
  *
  * @author chenqilin
  * @Date 2019/6/13

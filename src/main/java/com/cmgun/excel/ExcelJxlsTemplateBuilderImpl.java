@@ -1,20 +1,21 @@
 package com.cmgun.excel;
 
-import com.alibaba.excel.context.WriteContext;
 import com.alibaba.excel.exception.ExcelGenerateException;
 import com.alibaba.excel.metadata.Sheet;
 import com.alibaba.excel.metadata.Table;
-import com.alibaba.excel.support.ExcelTypeEnum;
 import com.alibaba.excel.util.CollectionUtils;
 import com.alibaba.excel.util.POITempFile;
 import com.alibaba.excel.util.WorkBookUtil;
 import com.alibaba.excel.write.ExcelBuilder;
 import net.sf.cglib.beans.BeanMap;
 import org.apache.poi.ss.usermodel.Row;
-import org.apache.poi.util.IOUtils;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
-import java.io.*;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -27,7 +28,10 @@ import java.util.List;
  */
 public class ExcelJxlsTemplateBuilderImpl implements ExcelBuilder {
 
-    private WriteContext context;
+    /**
+     * 专门用于处理Jxls模板的上下文
+     */
+    private JxlsWriteContext context;
 
     /**
      * 列模板
@@ -44,48 +48,25 @@ public class ExcelJxlsTemplateBuilderImpl implements ExcelBuilder {
      */
     private int templateLastRowNum = 0;
 
-    /**
-     * WriteContext 所用的模板文件输入流
-     */
-    private InputStream writeContextInputStream = null;
-
-    public ExcelJxlsTemplateBuilderImpl(InputStream templateInputStream,
-                                        OutputStream out,
-                                        ExcelTypeEnum excelType) {
+    public ExcelJxlsTemplateBuilderImpl(InputStream templateInputStream, OutputStream out) {
         // 只读取模板的前N-1列作为模板头固定列，第N列为模板占位符替换位置
         try {
             //初始化时候创建临时缓存目录，用于规避POI在并发写bug
             POITempFile.createPOIFilesDirectory();
             /*
             inputSteam只能读取一次，但SXSSFWorkbook使用滑动窗口方式进行遍历，已经遍历过的Cell无法再写。
-            因此这里对inputStream进行读取放到 ByteArrayOutputStream 进行两次读取。
-            第一次读取模板excel的最后一行占位符，第二次交给 WriteContext 进行文件的导出所用
+            因此这里先将 inputStream 封装为 XSSFWorkbook，读取最后一行后再清除最后一行，再生成 context 所需的 SXSSFWorkbook
              */
-
             // 解析模板excel的最后一行，读取占位符
-            readLastRow(templateInputStream);
-
-            context = new WriteContext(writeContextInputStream, out, excelType, false);
-            // 获取模板中最后一行
-//            templateLastRowNum = context.getWorkbook().getSheetAt(0).getActiveCell().getRow();
-//
-//            templateLastRowNum = context.getWorkbook().getSheetAt(0).getLastRowNum();
-//            Row lastRow = context.getWorkbook().getSheetAt(0).getRow(templateLastRowNum);
-//            // 解析最后一行，最后一行为占位符
-//            int colSize = lastRow.getLastCellNum();
-//            for (int i = lastRow.getFirstCellNum(); i < colSize; i++) {
-//                String cellTemplate = lastRow.getCell(i).getStringCellValue();
-//                // 添加列模板
-//                cellTemplates.add(cellTemplate);
-//                // 列模板解析，获取反射字段
-//                cellFieldNames.add(JxlsPlaceHolderUtils.getCellFieldName(cellTemplate));
-//            }
-
+            Workbook workbook = readLastRow(templateInputStream);
+            // 创建写上下文
+            context = new JxlsWriteContext(workbook, out);
 
             // 新建一个sheet
             Sheet sheet = new Sheet(1, templateLastRowNum);
             sheet.setSheetName("sheet1");
             sheet.setStartRow(templateLastRowNum + 1);
+            sheet.setHeadLineMun(templateLastRowNum);
             context.currentSheet(sheet);
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -93,43 +74,29 @@ public class ExcelJxlsTemplateBuilderImpl implements ExcelBuilder {
     }
 
     /**
-     * 读取模板文件最后一行的数据
+     * 读取模板文件最后一行的数据，然后清除最后一行，将 workbook 返回，writeContext 可直接使用该对象
+     *
      * @param tempInputStream 模板文件流
      * @throws Exception
+     * @return 清除最后一行的workbook
      */
-    private void readLastRow(InputStream tempInputStream) throws Exception {
-        // 复制原始模板文件输入流的临时输出流
-        ByteArrayOutputStream outputStream = null;
-        // 本次读取模板文件所用的输入流
-        InputStream currentInputStream = null;
-        try {
-            // 复制inputStream
-            outputStream = new ByteArrayOutputStream();
-            IOUtils.copy(tempInputStream, outputStream);
-            currentInputStream = new ByteArrayInputStream(outputStream.toByteArray());
-
-            XSSFWorkbook workbook = new XSSFWorkbook(currentInputStream);
-            templateLastRowNum = workbook.getSheetAt(0).getLastRowNum();
-            Row lastRow = workbook.getSheetAt(0).getRow(templateLastRowNum);
-            // 解析最后一行，最后一行为占位符
-            int colSize = lastRow.getLastCellNum();
-            for (int i = lastRow.getFirstCellNum(); i < colSize; i++) {
-                String cellTemplate = lastRow.getCell(i).getStringCellValue();
-                // 添加列模板
-                cellTemplates.add(cellTemplate);
-                // 列模板解析，获取反射字段
-                cellFieldNames.add(JxlsPlaceHolderUtils.getCellFieldName(cellTemplate));
-            }
-            // 返回给 WriteContext 使用的InputStream
-            writeContextInputStream = new ByteArrayInputStream(outputStream.toByteArray());
-        } catch (Exception e) {
-            // 不做操作，直接抛异常
-            throw e;
-        } finally {
-            // 关闭本次创建的IO流
-            IOUtils.closeQuietly(outputStream);
-            IOUtils.closeQuietly(currentInputStream);
+    private Workbook readLastRow(InputStream tempInputStream) throws Exception {
+        XSSFWorkbook workbook = new XSSFWorkbook(tempInputStream);
+        templateLastRowNum = workbook.getSheetAt(0).getLastRowNum();
+        Row lastRow = workbook.getSheetAt(0).getRow(templateLastRowNum);
+        // 解析最后一行，最后一行为占位符
+        int colSize = lastRow.getLastCellNum();
+        for (int i = lastRow.getFirstCellNum(); i < colSize; i++) {
+            String cellTemplate = lastRow.getCell(i).getStringCellValue();
+            // 添加列模板
+            cellTemplates.add(cellTemplate);
+            // 列模板解析，获取反射字段
+            cellFieldNames.add(JxlsPlaceHolderUtils.getCellFieldName(cellTemplate));
         }
+        // 清除最后一行
+        workbook.getSheetAt(0).removeRow(lastRow);
+        // 封装为 SXSSFWorkbook 后返回
+        return new SXSSFWorkbook(workbook);
     }
 
     /**
@@ -189,6 +156,14 @@ public class ExcelJxlsTemplateBuilderImpl implements ExcelBuilder {
         }
     }
 
+    /**
+     * 获取单元格内容
+     *
+     * @param cellTemplate 单元格模板
+     * @param fieldName 映射属性字段
+     * @param beanMap bean
+     * @return 需要写入的内容
+     */
     private String getCellValue(String cellTemplate, String fieldName, BeanMap beanMap) {
         Object value = beanMap.get(fieldName);
         if (value == null) {

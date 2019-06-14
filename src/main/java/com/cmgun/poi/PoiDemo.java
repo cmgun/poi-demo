@@ -7,17 +7,17 @@ import java.util.List;
  * 使用ali-easyexcel
  * https://github.com/alibaba/easyexcel
  */
-public class PoiDemoTest {
+public class PoiDemo {
 
     public static void main(String[] args) {
         System.out.println(System.getProperty("java.io.tmpdir"));
-        // 根据模板写入excel
+        // 根据Jxls模板写入excel
         testExcelTemplate();
 
         // 根据javaEntity的注解表头写入
-//        testAnnotationTemplate();
+        testAnnotationTemplate();
         // 模板样式
-//        testEasyExcelTemplate();
+        testEasyExcelTemplate();
     }
 
     private static List<Entity> createData(int length) {

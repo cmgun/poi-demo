@@ -1,8 +1,5 @@
 package com.cmgun.excel;
 
-import com.alibaba.excel.support.ExcelTypeEnum;
-import com.alibaba.excel.write.ExcelBuilderImpl;
-
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.List;
@@ -22,10 +19,9 @@ public class ExcelTemplateWriter {
      *
      * @param templateInputStream 模板excel，包含占位符
      * @param outputStream 导出excel输出流
-     * @param typeEnum 输出excel类型
      */
-    public ExcelTemplateWriter(InputStream templateInputStream, OutputStream outputStream, ExcelTypeEnum typeEnum) {
-        excelBuilder = new ExcelJxlsTemplateBuilderImpl(templateInputStream, outputStream, typeEnum);
+    public ExcelTemplateWriter(InputStream templateInputStream, OutputStream outputStream) {
+        excelBuilder = new ExcelJxlsTemplateBuilderImpl(templateInputStream, outputStream);
     }
 
     /**

@@ -1,8 +1,6 @@
 package com.cmgun.excel;
 
 import com.alibaba.excel.EasyExcelFactory;
-import com.alibaba.excel.ExcelWriter;
-import com.alibaba.excel.support.ExcelTypeEnum;
 
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -15,16 +13,16 @@ import java.io.OutputStream;
  * @author chenqilin
  * @Date 2019/6/13
  */
-public class ExcelFactory extends EasyExcelFactory {
+public class ExcelTemplateFactory extends EasyExcelFactory {
 
     /**
-     * 获取excel writer
+     * 获取读取 Jxls-poi-jdk1.6 模板的excel writer，目前只支持 .xlsx 后缀模板文件
      *
      * @param temp 模板文件流
      * @param outputStream 导出目标文件流
      * @return excel writer
      */
     public static ExcelTemplateWriter getWriterWithTemp(InputStream temp, OutputStream outputStream) {
-        return new ExcelTemplateWriter(temp, outputStream, ExcelTypeEnum.XLSX);
+        return new ExcelTemplateWriter(temp, outputStream);
     }
 }
