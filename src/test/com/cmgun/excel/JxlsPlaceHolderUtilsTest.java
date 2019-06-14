@@ -1,7 +1,10 @@
 package com.cmgun.excel;
 
+import org.apache.poi.xssf.usermodel.XSSFCell;
 import org.junit.Assert;
 import org.junit.Test;
+
+import java.util.regex.Matcher;
 
 /**
  * 模板占位符转换测试
@@ -20,6 +23,22 @@ public class JxlsPlaceHolderUtilsTest {
         String pattern2 = "${translateUtil.getConstantName('InvoiceState', c.invoiceState)}";
         String match2 = JxlsPlaceHolderUtils.convertPlaceHolder(pattern2);
         Assert.assertEquals("translateUtil.getConstantName('InvoiceState', c.invoiceState)", match2);
+        String pattern3 = "￥${c.amount}";
+        String match3 = JxlsPlaceHolderUtils.convertPlaceHolder(pattern3);
+        Assert.assertEquals("c.amount", match3);
+        String pattern4 = "${c.amount}%";
+        String match4 = JxlsPlaceHolderUtils.convertPlaceHolder(pattern4);
+        Assert.assertEquals("c.amount", match4);
+    }
+
+    @Test
+    public void testConvertFooterCell() {
+        Matcher matcher1 = JxlsPlaceHolderUtils.FOOTER_PLACE_HOLDER.matcher("$[sum(B2)]");
+        Assert.assertTrue(matcher1.matches());
+        String result1 = "SUM(" + matcher1.group(1) + matcher1.group(2) + ":" + matcher1.group(1) + (Integer.valueOf(matcher1.group(2)) + 10) + ")";
+        Assert.assertEquals("SUM(B2:B12)", result1);
+        Matcher matcher2 = JxlsPlaceHolderUtils.FOOTER_PLACE_HOLDER.matcher("合计：");
+        Assert.assertFalse(matcher2.matches());
     }
 
     @Test

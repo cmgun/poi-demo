@@ -17,8 +17,11 @@ public class PoiDemo {
     public static void main(String[] args) {
         System.out.println(System.getProperty("java.io.tmpdir"));
         // 根据Jxls模板写入excel
-        testExcelTemplate1();
+//        testExcelTemplate1();
 //        testExcelTemplate2();
+        // 有求和操作
+        testExcelTemplate3(500);
+
 
         // 根据javaEntity的注解表头写入
 //        testAnnotationTemplate();
@@ -57,7 +60,7 @@ public class PoiDemo {
     public static void testExcelTemplate1() {
         System.out.println("[jexl] 500rows * 7cols data prepare...");
 //        List<JxlsEntity> data1 = createJxlsDasta(500);
-        Map<String, Object> datas = createJxlsTmpDatas(500);
+        Map<String, Object> datas = createJxlsTmpDatas(50000);
         long startTime = System.currentTimeMillis();
         System.out.println("[jexl] 500rows * 7cols start export, using template...");
         PoiUtil.exportForJxlsTemp("template11.xlsx", "test13.xlsx", datas);
@@ -72,6 +75,16 @@ public class PoiDemo {
         System.out.println("[non] 500rows * 7cols start export, using template...");
         PoiUtil.exportForJxlsTemp1("template.xlsx", "test11.xlsx", data1);
         System.out.println("[non] 500rows * 7cols, 耗时:" + (System.currentTimeMillis() - startTime));
+    }
+
+    public static void testExcelTemplate3(int size) {
+        System.out.println("[jexl] testExcelTemplate3 data prepare...");
+//        List<JxlsEntity> data1 = createJxlsDasta(500);
+        Map<String, Object> datas = createJxlsTmpDatas(size);
+        long startTime = System.currentTimeMillis();
+        System.out.println("[jexl] testExcelTemplate3 start export, using template..., data size:" + size);
+        PoiUtil.exportForJxlsTemp("template12.xlsx", "test14.xlsx", datas);
+        System.out.println("[jexl] 500rows * 7cols, 耗时:" + (System.currentTimeMillis() - startTime));
     }
 
     public static void testEasyExcelTemplate() {

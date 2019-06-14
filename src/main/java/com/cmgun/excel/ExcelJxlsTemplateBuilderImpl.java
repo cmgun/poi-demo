@@ -18,6 +18,7 @@ import org.apache.poi.ss.usermodel.CellStyle;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.streaming.SXSSFWorkbook;
+import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 import java.io.IOException;
@@ -48,6 +49,11 @@ public class ExcelJxlsTemplateBuilderImpl implements ExcelBuilder {
     private List<Expression> cellJexlExpressions = new ArrayList<>();
 
     /**
+     * 模板的footers
+     */
+    private List<Row> footers = new ArrayList<>();
+
+    /**
      * 列模板样式
      */
     private List<CellStyle> cellStyles = new ArrayList<>();
@@ -63,7 +69,7 @@ public class ExcelJxlsTemplateBuilderImpl implements ExcelBuilder {
     private List<String> cellFieldNames = new ArrayList<>();
 
     /**
-     * 模板最后一行的位置，默认为0
+     * 占位符行的位置，默认为0
      */
     private int templateLastRowNum = 0;
 
@@ -79,10 +85,10 @@ public class ExcelJxlsTemplateBuilderImpl implements ExcelBuilder {
             POITempFile.createPOIFilesDirectory();
             /*
             inputSteam只能读取一次，但SXSSFWorkbook使用滑动窗口方式进行遍历，已经遍历过的Cell无法再写。
-            因此这里先将 inputStream 封装为 XSSFWorkbook，读取最后一行后再清除最后一行，再生成 context 所需的 SXSSFWorkbook
+            因此这里先将 inputStream 封装为 XSSFWorkbook，读取占位符行后再删除对应的行，最后生成 context 所需的 SXSSFWorkbook
              */
-            // 解析模板excel的最后一行，读取占位符
-            Workbook workbook = readLastRow(templateInputStream);
+            // 解析模板excel，读取占位符
+            Workbook workbook = readCellTemplate(templateInputStream);
 
             // 创建写上下文
             context = new JxlsWriteContext(workbook, out);
@@ -111,16 +117,49 @@ public class ExcelJxlsTemplateBuilderImpl implements ExcelBuilder {
      * @throws Exception
      * @return 清除最后一行的workbook
      */
-    private Workbook readLastRow(InputStream tempInputStream) throws Exception {
+    private Workbook readCellTemplate(InputStream tempInputStream) throws Exception {
         XSSFWorkbook workbook = new XSSFWorkbook(tempInputStream);
-        templateLastRowNum = workbook.getSheetAt(0).getLastRowNum();
-        Row lastRow = workbook.getSheetAt(0).getRow(templateLastRowNum);
-        // 解析最后一行，最后一行为占位符
-        int colSize = lastRow.getLastCellNum();
+        XSSFSheet sheet = workbook.getSheetAt(0);
+        // 是否已经读完所有模板头，即占位符开始前的位置
+        boolean hasReadAllHeadRows = false;
+        for (int i = sheet.getFirstRowNum(); i <= sheet.getLastRowNum(); i++) {
+            Row row = sheet.getRow(i);
+            if (!hasReadAllHeadRows) {
+                Cell cell = row.getCell(0);
+                // 还未读完模板头部，判断第一个cell是否包含占位符
+                if (cell != null && JxlsPlaceHolderUtils.isPlaceHolderCell(cell.getStringCellValue())) {
+                    // 包含占位符，模板头读取结束
+                    hasReadAllHeadRows = true;
+                    // 数据模板解析
+                    initCellTemplates(row);
+                    // 清除该行
+                    sheet.removeRow(row);
+                }
+            } else{
+                // 已经读完头部数据，剩下的行属于footer部分，记录后从sheet中清除
+                // 不能存Row对象，会被disconnect TODO
+                footers.add(row);
+                if (row != null) {
+                    sheet.removeRow(row);
+                }
+            }
+        }
+        // 封装为 SXSSFWorkbook 后返回
+        return new SXSSFWorkbook(workbook);
+    }
+
+    /**
+     * 初始化数据读取模板
+     * @param row 模板行
+     */
+    private void initCellTemplates(Row row) {
+        // 数据模板开始写入的行数
+        templateLastRowNum = row.getRowNum();
+        int colSize = row.getLastCellNum();
         // Jexl解析引擎
         JexlEngine jexlEngine = new JexlEngine();
-        for (int i = lastRow.getFirstCellNum(); i < colSize; i++) {
-            Cell cell = lastRow.getCell(i);
+        for (int i = row.getFirstCellNum(); i < colSize; i++) {
+            Cell cell = row.getCell(i);
             String cellTemplate = cell.getStringCellValue();
             // 添加列模板
             cellTemplates.add(cellTemplate);
@@ -131,10 +170,6 @@ public class ExcelJxlsTemplateBuilderImpl implements ExcelBuilder {
             // 列模板解析，获取反射字段
             cellFieldNames.add(JxlsPlaceHolderUtils.getCellFieldName(cellTemplate));
         }
-        // 清除最后一行
-        workbook.getSheetAt(0).removeRow(lastRow);
-        // 封装为 SXSSFWorkbook 后返回
-        return new SXSSFWorkbook(workbook);
     }
 
     /**
@@ -183,9 +218,15 @@ public class ExcelJxlsTemplateBuilderImpl implements ExcelBuilder {
         }
         // 从最后一行开始写
         templateLastRowNum = templateLastRowNum - 1;
+        int lastRowNum = 0;
         for (int i = 0; i < data.size(); i++) {
-            int n = i + templateLastRowNum + 1;
-            addOneRowOfDataToExcelWithJexl(data.get(i), n);
+            lastRowNum = i + templateLastRowNum + 1;
+            addOneRowOfDataToExcelWithJexl(data.get(i), lastRowNum);
+        }
+        // 写footer
+        for (int i = 0; i < footers.size(); i++) {
+            int n = i + lastRowNum + 1;
+            addOneRowOfFooterToExcelWithJexl(footers.get(i), n, data.size());
         }
     }
 
@@ -205,6 +246,27 @@ public class ExcelJxlsTemplateBuilderImpl implements ExcelBuilder {
         }
     }
 
+    /**
+     * 添加一行footer到excel
+     * @param footerRow 待添加的row，如果有占位符需要替换
+     * @param n 待写入的行数
+     * @param dataSize 模板数据的长度
+     */
+    private void addOneRowOfFooterToExcelWithJexl(Row footerRow, int n, int dataSize) {
+        if (footerRow == null) {
+            return;
+        }
+        Row row = WorkBookUtil.createRow(context.getCurrentSheet(), n);
+        for (int i = footerRow.getFirstCellNum(); i < footerRow.getLastCellNum(); i++) {
+            Cell cell = footerRow.getCell(i);
+            JxlsPlaceHolderUtils.convertFooterCell(cell, dataSize);
+            // 设置footer cell
+            Cell newCell = row.createCell(i);
+            newCell.setCellStyle(cell.getCellStyle());
+            newCell.setCellFormula(cell.getCellFormula());
+            newCell.setCellValue(cell.getStringCellValue());
+        }
+    }
 
     @Override
     public void addContent(List data, Sheet sheetParam) {

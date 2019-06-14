@@ -4,6 +4,8 @@ import com.cmgun.util.DateUtil;
 import com.cmgun.util.TranslateUtil;
 import org.apache.commons.jexl2.Expression;
 import org.apache.commons.jexl2.JexlContext;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.Row;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -19,7 +21,12 @@ public class JxlsPlaceHolderUtils {
     /**
      * cell 占位符
      */
-    private static final String CELL_PLACE_HOLDER = "\\$\\{(.*)}";
+    private static final Pattern CELL_PLACE_HOLDER = Pattern.compile(".*\\$\\{(.*)}.*");
+
+    /**
+     * footer 占位符，目前只看到有SUM
+     */
+    public static final Pattern FOOTER_PLACE_HOLDER = Pattern.compile("\\$\\[sum\\(([a-zA-z]+)([0-9]+)\\)]");
 
     /**
      * cell value的field名称，以c.*开头，)} 或 } 或 , 结尾，*为field名称
@@ -43,7 +50,24 @@ public class JxlsPlaceHolderUtils {
 
 
     public static Object getCellValue(Expression cellTemplate, JexlContext context) {
-        return cellTemplate.evaluate(context);
+        try {
+            return cellTemplate.evaluate(context);
+        } catch (RuntimeException e) {
+            // 解析异常
+            e.printStackTrace();
+        }
+        return "";
+    }
+
+    /**
+     * 判断当前cell是否包含占位符${...}
+     *
+     * @param cellValue 单元格内容
+     * @return 是否包含占位符
+     */
+    public static boolean isPlaceHolderCell(String cellValue) {
+        Matcher matcher = CELL_PLACE_HOLDER.matcher(cellValue);
+        return matcher.matches();
     }
 
     /**
@@ -52,8 +76,7 @@ public class JxlsPlaceHolderUtils {
      * @return 占位符中的内容
      */
     public static String convertPlaceHolder(String cellTemplate) {
-        Pattern pattern = Pattern.compile(CELL_PLACE_HOLDER);
-        Matcher matcher = pattern.matcher(cellTemplate);
+        Matcher matcher = CELL_PLACE_HOLDER.matcher(cellTemplate);
         if (matcher.matches()) {
             // 只会匹配一次
             return matcher.group(1);
@@ -61,6 +84,21 @@ public class JxlsPlaceHolderUtils {
         return "";
     }
 
+    /**
+     * footer占位符转换
+     * @param cell 单元格
+     * @param dataSize 模板数据大小
+     */
+    public static void convertFooterCell(Cell cell, int dataSize) {
+        Matcher matcher = FOOTER_PLACE_HOLDER.matcher(cell.getStringCellValue());
+        if (matcher.matches()) {
+            // 组装表达式
+            int maxRowNum = Integer.valueOf(matcher.group(2)) + dataSize;
+            String sum = "SUM(" + matcher.group(1) + matcher.group(2) + ":" + matcher.group(1) + maxRowNum + ")";
+            cell.setCellFormula(sum);
+            cell.setCellValue("");
+        }
+    }
 
     /**
      * 查找模板的反射field
