@@ -15,6 +15,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.List;
+import java.util.Map;
 
 public class PoiUtil {
 
@@ -76,9 +77,9 @@ public class PoiUtil {
     }
 
     /**
-     * 读取excel模板，替换占位符内容，兼容Jxls模板读取方式
+     * 读取excel模板，使用Jxls模板读取方式
      */
-    public static void exportForJxlsTemp(String templateFileName, String targetFileName, List datas) {
+    public static void exportForJxlsTemp1(String templateFileName, String targetFileName, List datas) {
         OutputStream out = null;
         ExcelTemplateWriter writer = null;
         InputStream inputStream = null;
@@ -86,6 +87,30 @@ public class PoiUtil {
             inputStream = getResourcesFileInputStream(templateFileName);
             out = new FileOutputStream(targetFileName);
             writer = ExcelTemplateFactory.getWriterWithTemp(inputStream, out);
+            writer.write(datas, 0);
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            // 关闭资源
+            if (writer != null) {
+                writer.finish();
+            }
+            IOUtils.closeQuietly(out);
+            IOUtils.closeQuietly(inputStream);
+        }
+    }
+
+    /**
+     * 读取excel模板，使用Jxls模板读取方式
+     */
+    public static void exportForJxlsTemp(String templateFileName, String targetFileName, Map<String, Object> datas) {
+        OutputStream out = null;
+        ExcelTemplateWriter writer = null;
+        InputStream inputStream = null;
+        try {
+            inputStream = getResourcesFileInputStream(templateFileName);
+            out = new FileOutputStream(targetFileName);
+            writer = ExcelTemplateFactory.getWriterWithTemp(inputStream, out, datas);
             writer.write(datas);
         } catch (Exception e) {
             e.printStackTrace();

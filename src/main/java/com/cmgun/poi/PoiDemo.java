@@ -1,7 +1,12 @@
 package com.cmgun.poi;
 
+import com.cmgun.util.DateUtil;
+import com.cmgun.util.TranslateUtil;
+
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 使用ali-easyexcel
@@ -12,12 +17,13 @@ public class PoiDemo {
     public static void main(String[] args) {
         System.out.println(System.getProperty("java.io.tmpdir"));
         // 根据Jxls模板写入excel
-        testExcelTemplate();
+        testExcelTemplate1();
+//        testExcelTemplate2();
 
         // 根据javaEntity的注解表头写入
-        testAnnotationTemplate();
+//        testAnnotationTemplate();
         // 模板样式
-        testEasyExcelTemplate();
+//        testEasyExcelTemplate();
     }
 
     private static List<Entity> createData(int length) {
@@ -36,13 +42,36 @@ public class PoiDemo {
         return data;
     }
 
-    public static void testExcelTemplate() {
-        System.out.println("500rows * 7cols data prepare...");
-        List<JxlsEntity> data1 = createJxlsDasta(500);
+    private static Map<String, Object> createJxlsTmpDatas(int size) {
+        Map<String, Object> datas = new HashMap<>();
+        List<JxlsEntity> data = new ArrayList<>();
+        for (int i = 1; i <= size; i++) {
+            data.add(new JxlsEntity(i, "msg" + i, i % 2 == 0 ? "0" : "1"));
+        }
+        datas.put("datas", data);
+        datas.put("dateUtil", new DateUtil());
+        datas.put("translateUtil", new TranslateUtil());
+        return datas;
+    }
+
+    public static void testExcelTemplate1() {
+        System.out.println("[jexl] 500rows * 7cols data prepare...");
+//        List<JxlsEntity> data1 = createJxlsDasta(500);
+        Map<String, Object> datas = createJxlsTmpDatas(500);
         long startTime = System.currentTimeMillis();
-        System.out.println("500rows * 7cols start export, using template...");
-        PoiUtil.exportForJxlsTemp("template.xlsx", "test11.xlsx", data1);
-        System.out.println("500rows * 7cols, 耗时:" + (System.currentTimeMillis() - startTime));
+        System.out.println("[jexl] 500rows * 7cols start export, using template...");
+        PoiUtil.exportForJxlsTemp("template11.xlsx", "test13.xlsx", datas);
+        System.out.println("[jexl] 500rows * 7cols, 耗时:" + (System.currentTimeMillis() - startTime));
+    }
+
+    public static void testExcelTemplate2() {
+        System.out.println("[non] 500rows * 7cols data prepare...");
+        List<JxlsEntity> data1 = createJxlsDasta(500);
+//        Map<String, Object> datas = createJxlsTmpDatas(500);
+        long startTime = System.currentTimeMillis();
+        System.out.println("[non] 500rows * 7cols start export, using template...");
+        PoiUtil.exportForJxlsTemp1("template.xlsx", "test11.xlsx", data1);
+        System.out.println("[non] 500rows * 7cols, 耗时:" + (System.currentTimeMillis() - startTime));
     }
 
     public static void testEasyExcelTemplate() {

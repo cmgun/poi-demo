@@ -15,8 +15,6 @@ import org.apache.poi.ss.util.CellRangeAddress;
 
 import java.io.OutputStream;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 import static com.alibaba.excel.util.StyleUtil.buildSheetStyle;
 
@@ -62,11 +60,6 @@ public class JxlsWriteContext {
      * Final output stream
      */
     private OutputStream outputStream;
-
-    /**
-     * Written form collection
-     */
-    private Map<Integer, Table> tableMap = new ConcurrentHashMap<Integer, Table>();
 
     /**
      * Cell default style
@@ -206,7 +199,7 @@ public class JxlsWriteContext {
                     tableStyle.getTableContentBackGroundColor());
         }
     }
-    
+
 
     public ExcelHeadProperty getExcelHeadProperty() {
         return this.excelHeadProperty;

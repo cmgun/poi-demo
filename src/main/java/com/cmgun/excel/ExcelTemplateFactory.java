@@ -4,6 +4,7 @@ import com.alibaba.excel.EasyExcelFactory;
 
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.Map;
 
 /**
  * Excel操作工厂类
@@ -24,5 +25,9 @@ public class ExcelTemplateFactory extends EasyExcelFactory {
      */
     public static ExcelTemplateWriter getWriterWithTemp(InputStream temp, OutputStream outputStream) {
         return new ExcelTemplateWriter(temp, outputStream);
+    }
+
+    public static ExcelTemplateWriter getWriterWithTemp(InputStream temp, OutputStream outputStream, Map<String, Object> datas) {
+        return new ExcelTemplateWriter(temp, outputStream, datas);
     }
 }

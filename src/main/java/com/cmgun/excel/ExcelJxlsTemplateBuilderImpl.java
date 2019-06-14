@@ -5,9 +5,16 @@ import com.alibaba.excel.metadata.Sheet;
 import com.alibaba.excel.metadata.Table;
 import com.alibaba.excel.util.CollectionUtils;
 import com.alibaba.excel.util.POITempFile;
+import com.alibaba.excel.util.TypeUtil;
 import com.alibaba.excel.util.WorkBookUtil;
 import com.alibaba.excel.write.ExcelBuilder;
 import net.sf.cglib.beans.BeanMap;
+import org.apache.commons.jexl2.Expression;
+import org.apache.commons.jexl2.JexlContext;
+import org.apache.commons.jexl2.JexlEngine;
+import org.apache.commons.jexl2.MapContext;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.CellStyle;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.streaming.SXSSFWorkbook;
@@ -17,7 +24,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 根据Excel模板导出Excel，替换模板占位符。目前只为了兼容jxls-poi-jdk1.6的模板导出样式而已。
@@ -34,6 +43,16 @@ public class ExcelJxlsTemplateBuilderImpl implements ExcelBuilder {
     private JxlsWriteContext context;
 
     /**
+     * 列模板表达式
+     */
+    private List<Expression> cellJexlExpressions = new ArrayList<>();
+
+    /**
+     * 列模板样式
+     */
+    private List<CellStyle> cellStyles = new ArrayList<>();
+
+    /**
      * 列模板
      */
     private List<String> cellTemplates = new ArrayList<>();
@@ -48,6 +67,11 @@ public class ExcelJxlsTemplateBuilderImpl implements ExcelBuilder {
      */
     private int templateLastRowNum = 0;
 
+    /**
+     * jexlContext，用于模板
+     */
+    private JexlContext jexlContext = new MapContext();
+
     public ExcelJxlsTemplateBuilderImpl(InputStream templateInputStream, OutputStream out) {
         // 只读取模板的前N-1列作为模板头固定列，第N列为模板占位符替换位置
         try {
@@ -59,9 +83,9 @@ public class ExcelJxlsTemplateBuilderImpl implements ExcelBuilder {
              */
             // 解析模板excel的最后一行，读取占位符
             Workbook workbook = readLastRow(templateInputStream);
+
             // 创建写上下文
             context = new JxlsWriteContext(workbook, out);
-
             // 新建一个sheet
             Sheet sheet = new Sheet(1, templateLastRowNum);
             sheet.setSheetName("sheet1");
@@ -71,6 +95,13 @@ public class ExcelJxlsTemplateBuilderImpl implements ExcelBuilder {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
+    }
+
+
+    public ExcelJxlsTemplateBuilderImpl(InputStream templateInputStream, OutputStream out, Map<String, Object> datas) {
+        this(templateInputStream, out);
+        // 初始化JexlContext
+        initJexlContext(datas);
     }
 
     /**
@@ -86,10 +117,17 @@ public class ExcelJxlsTemplateBuilderImpl implements ExcelBuilder {
         Row lastRow = workbook.getSheetAt(0).getRow(templateLastRowNum);
         // 解析最后一行，最后一行为占位符
         int colSize = lastRow.getLastCellNum();
+        // Jexl解析引擎
+        JexlEngine jexlEngine = new JexlEngine();
         for (int i = lastRow.getFirstCellNum(); i < colSize; i++) {
-            String cellTemplate = lastRow.getCell(i).getStringCellValue();
+            Cell cell = lastRow.getCell(i);
+            String cellTemplate = cell.getStringCellValue();
             // 添加列模板
             cellTemplates.add(cellTemplate);
+            // 添加列模板表达式
+            cellJexlExpressions.add(jexlEngine.createExpression(JxlsPlaceHolderUtils.convertPlaceHolder(cellTemplate)));
+            // 添加列模板样式
+            cellStyles.add(cell.getCellStyle());
             // 列模板解析，获取反射字段
             cellFieldNames.add(JxlsPlaceHolderUtils.getCellFieldName(cellTemplate));
         }
@@ -97,6 +135,23 @@ public class ExcelJxlsTemplateBuilderImpl implements ExcelBuilder {
         workbook.getSheetAt(0).removeRow(lastRow);
         // 封装为 SXSSFWorkbook 后返回
         return new SXSSFWorkbook(workbook);
+    }
+
+    /**
+     * 初始化JexlContext
+     * @param datas 包含需要写入的数据和工具类
+     */
+    private void initJexlContext(Map<String, Object> datas) {
+        // 获取解析工具类，除了 datas 以外的key
+        Iterator<Map.Entry<String, Object>> iterator = datas.entrySet().iterator();
+        while (iterator.hasNext()) {
+            Map.Entry<String, Object> entry = iterator.next();
+            if (!"datas".equals(entry.getKey())) {
+                // 非数据内容，放入context后删除
+                jexlContext.set(entry.getKey(), entry.getValue());
+                iterator.remove();
+            }
+        }
     }
 
     /**
@@ -117,6 +172,39 @@ public class ExcelJxlsTemplateBuilderImpl implements ExcelBuilder {
             addOneRowOfDataToExcel(data.get(i), n);
         }
     }
+
+    /**
+     * 使用Jexl解析表达式
+     * @param data
+     */
+    public void addContext(List data) {
+        if (CollectionUtils.isEmpty(data)) {
+            return;
+        }
+        // 从最后一行开始写
+        templateLastRowNum = templateLastRowNum - 1;
+        for (int i = 0; i < data.size(); i++) {
+            int n = i + templateLastRowNum + 1;
+            addOneRowOfDataToExcelWithJexl(data.get(i), n);
+        }
+    }
+
+    /**
+     * 添加一行数据到excel中，使用jexl进行模板字符串解析
+     *
+     * @param oneRowData 待添加的对象
+     * @param n 待操作的行
+     */
+    private void addOneRowOfDataToExcelWithJexl(Object oneRowData, int n) {
+        Row row = WorkBookUtil.createRow(context.getCurrentSheet(), n);
+        // 添加当前beanMap到Context中
+        jexlContext.set("c", oneRowData);
+        for (int i = 0; i < cellJexlExpressions.size(); i++) {
+            Object cellValue = JxlsPlaceHolderUtils.getCellValue(cellJexlExpressions.get(i), jexlContext);
+            WorkBookUtil.createCell(row, i, cellStyles.get(i), cellValue, TypeUtil.isNum(cellValue));
+        }
+    }
+
 
     @Override
     public void addContent(List data, Sheet sheetParam) {
@@ -146,7 +234,7 @@ public class ExcelJxlsTemplateBuilderImpl implements ExcelBuilder {
     /**
      * 添加java对象到Excel中
      * @param oneRowData 待添加的对象
-     * @param row 待操作的俄航
+     * @param row 待操作的行
      */
     private void addJavaObjectToExcel(Object oneRowData, Row row) {
         BeanMap beanMap = BeanMap.create(oneRowData);

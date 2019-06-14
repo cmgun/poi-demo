@@ -2,22 +2,24 @@ package com.cmgun.excel;
 
 import com.cmgun.util.DateUtil;
 import com.cmgun.util.TranslateUtil;
+import org.apache.commons.jexl2.Expression;
+import org.apache.commons.jexl2.JexlContext;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * 兼容jxls-poi-jdk1.6的模板解析方式
- * 目前只支持一下占位符的解析：
- * 1. 属性字段，即在${...}中以c.开头的属性字段，
- *    如 ${c.field}，${translateUtil.getConstantName('Field', c.field)}，${dateUtil.convertToDate(c.field, 'yyyyMMdd')}
- * 2. translateUtil.getConstantName，常量转换方法
- * 3. dateUtil.convertToDate，String类型日期的格式转换
+ * 兼容jxls-poi-jdk1.6的模板解析方式，使用commons-jexl进行字符串解析
  *
  * @author chenqilin
  * @Date 2019/6/13
  */
 public class JxlsPlaceHolderUtils {
+
+    /**
+     * cell 占位符
+     */
+    private static final String CELL_PLACE_HOLDER = "\\$\\{(.*)}";
 
     /**
      * cell value的field名称，以c.*开头，)} 或 } 或 , 结尾，*为field名称
@@ -38,6 +40,27 @@ public class JxlsPlaceHolderUtils {
      * 业务常量转换工具类，处理模板中的枚举值转换
      */
     private static final String TRANSLATE_UTIL = "translateUtil.getConstantName";
+
+
+    public static Object getCellValue(Expression cellTemplate, JexlContext context) {
+        return cellTemplate.evaluate(context);
+    }
+
+    /**
+     * 获取占位符中的内容
+     * @param cellTemplate 单元格内容
+     * @return 占位符中的内容
+     */
+    public static String convertPlaceHolder(String cellTemplate) {
+        Pattern pattern = Pattern.compile(CELL_PLACE_HOLDER);
+        Matcher matcher = pattern.matcher(cellTemplate);
+        if (matcher.matches()) {
+            // 只会匹配一次
+            return matcher.group(1);
+        }
+        return "";
+    }
+
 
     /**
      * 查找模板的反射field
@@ -71,7 +94,7 @@ public class JxlsPlaceHolderUtils {
         Matcher matcher = pattern.matcher(cellTemplate);
         if (matcher.matches()) {
             // 获取引号内的日期格式，模板中的日期格式为输出的指定日期格式
-            return DateUtil.convertToFormatDateStr(beanValue, matcher.group(1));
+            return DateUtil.convertToDate(beanValue, matcher.group(1));
         }
         // 模板内没有日期格式，不进行格式化
         return beanValue;

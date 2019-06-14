@@ -13,7 +13,7 @@ import java.util.Date;
  */
 public class DateUtil {
 
-    public static String convertToFormatDateStr(String dateStr, String format) {
+    public static String convertToDate(String dateStr, String format) {
         if (dateStr == null || dateStr.length() == 0) {
             return null;
         }

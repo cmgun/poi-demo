@@ -9,7 +9,6 @@ package com.cmgun.util;
 public class TranslateUtil {
 
     public static String getConstantName(String constantType, String constantValue) {
-        System.out.println("constantType: " + constantType);
         if ("0".equals(constantValue)) {
             return "这是个值为0的枚举";
         } else if ("1".equals(constantValue)) {

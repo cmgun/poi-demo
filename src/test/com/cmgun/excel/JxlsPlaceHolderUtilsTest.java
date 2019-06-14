@@ -13,6 +13,16 @@ import org.junit.Test;
 public class JxlsPlaceHolderUtilsTest {
 
     @Test
+    public void testConvertPlaceHolder() {
+        String pattern1 = "${c.billCode}";
+        String match1 = JxlsPlaceHolderUtils.convertPlaceHolder(pattern1);
+        Assert.assertEquals("c.billCode", match1);
+        String pattern2 = "${translateUtil.getConstantName('InvoiceState', c.invoiceState)}";
+        String match2 = JxlsPlaceHolderUtils.convertPlaceHolder(pattern2);
+        Assert.assertEquals("translateUtil.getConstantName('InvoiceState', c.invoiceState)", match2);
+    }
+
+    @Test
     public void testGetCellFieldName() {
         String pattern1 = "${c.billCode}";
         String match1 = JxlsPlaceHolderUtils.getCellFieldName(pattern1);
