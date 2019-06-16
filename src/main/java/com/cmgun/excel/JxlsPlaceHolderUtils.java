@@ -1,11 +1,10 @@
 package com.cmgun.excel;
 
+import com.cmgun.excel.footer.FooterCell;
 import com.cmgun.util.DateUtil;
 import com.cmgun.util.TranslateUtil;
 import org.apache.commons.jexl2.Expression;
 import org.apache.commons.jexl2.JexlContext;
-import org.apache.poi.ss.usermodel.Cell;
-import org.apache.poi.ss.usermodel.Row;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -86,17 +85,17 @@ public class JxlsPlaceHolderUtils {
 
     /**
      * footer占位符转换
-     * @param cell 单元格
+     * @param footerCell 单元格
      * @param dataSize 模板数据大小
      */
-    public static void convertFooterCell(Cell cell, int dataSize) {
-        Matcher matcher = FOOTER_PLACE_HOLDER.matcher(cell.getStringCellValue());
+    public static void convertFooterCell(FooterCell footerCell, int dataSize) {
+        Matcher matcher = FOOTER_PLACE_HOLDER.matcher(footerCell.getCellValue());
         if (matcher.matches()) {
             // 组装表达式
             int maxRowNum = Integer.valueOf(matcher.group(2)) + dataSize;
             String sum = "SUM(" + matcher.group(1) + matcher.group(2) + ":" + matcher.group(1) + maxRowNum + ")";
-            cell.setCellFormula(sum);
-            cell.setCellValue("");
+            footerCell.setCellFormula(sum);
+            footerCell.setCellValue("");
         }
     }
 

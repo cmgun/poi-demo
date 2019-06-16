@@ -8,6 +8,7 @@ import com.alibaba.excel.util.POITempFile;
 import com.alibaba.excel.util.TypeUtil;
 import com.alibaba.excel.util.WorkBookUtil;
 import com.alibaba.excel.write.ExcelBuilder;
+import com.cmgun.excel.footer.FooterCell;
 import com.cmgun.excel.footer.FooterRow;
 import net.sf.cglib.beans.BeanMap;
 import org.apache.commons.jexl2.Expression;
@@ -120,6 +121,8 @@ public class ExcelJxlsTemplateBuilderImpl implements ExcelBuilder {
         XSSFSheet sheet = workbook.getSheetAt(0);
         // 是否已经读完所有模板头，即占位符开始前的位置
         boolean hasReadAllHeadRows = false;
+        // footer部分模板行数
+        int footerRows = 0;
         for (int i = sheet.getFirstRowNum(); i <= sheet.getLastRowNum(); i++) {
             Row row = sheet.getRow(i);
             if (!hasReadAllHeadRows) {
@@ -135,13 +138,12 @@ public class ExcelJxlsTemplateBuilderImpl implements ExcelBuilder {
                 }
             } else{
                 // 已经读完头部数据，剩下的行属于footer部分，记录后从sheet中清除
-                // 不能存Row对象，会被disconnect TODO
+                // 不能直接存Row对象，会被disconnect，因此只记录cell文字和格式
                 if (row != null) {
-                    FooterRow footerRow = new FooterRow(row.getRowNum());
-
-                    footers.add(row);
+                    footers.add(new FooterRow(row, footerRows));
                     sheet.removeRow(row);
                 }
+                footerRows++;
             }
         }
         // 封装为 SXSSFWorkbook 后返回
@@ -252,19 +254,21 @@ public class ExcelJxlsTemplateBuilderImpl implements ExcelBuilder {
      * @param n 待写入的行数
      * @param dataSize 模板数据的长度
      */
-    private void addOneRowOfFooterToExcelWithJexl(Row footerRow, int n, int dataSize) {
+    private void addOneRowOfFooterToExcelWithJexl(FooterRow footerRow, int n, int dataSize) {
         if (footerRow == null) {
             return;
         }
-        Row row = WorkBookUtil.createRow(context.getCurrentSheet(), n);
-        for (int i = footerRow.getFirstCellNum(); i < footerRow.getLastCellNum(); i++) {
-            Cell cell = footerRow.getCell(i);
-            JxlsPlaceHolderUtils.convertFooterCell(cell, dataSize);
+        int rowNum = n + footerRow.getFooterRowNum();
+        Row row = WorkBookUtil.createRow(context.getCurrentSheet(), rowNum);
+        for (int i = 0; i < footerRow.getCells().size(); i++) {
+            FooterCell footerCell = footerRow.getCells().get(i);
+
+            JxlsPlaceHolderUtils.convertFooterCell(footerCell, dataSize);
             // 设置footer cell
-            Cell newCell = row.createCell(i);
-            newCell.setCellStyle(cell.getCellStyle());
-            newCell.setCellFormula(cell.getCellFormula());
-            newCell.setCellValue(cell.getStringCellValue());
+            Cell newCell = row.createCell(footerCell.getCellNum());
+            newCell.setCellStyle(footerCell.getCellStyle());
+            newCell.setCellFormula(footerCell.getCellFormula());
+            newCell.setCellValue(footerCell.getCellValue());
         }
     }
 
