@@ -3,6 +3,7 @@ package com.cmgun.poi;
 import com.cmgun.util.DateUtil;
 import com.cmgun.util.TranslateUtil;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -56,6 +57,7 @@ public class PoiDemo {
         datas.put("datas", data);
         datas.put("dateUtil", new DateUtil());
         datas.put("translateUtil", new TranslateUtil());
+        datas.put("totalAmount", new BigDecimal("10000"));
         return datas;
     }
 
@@ -67,16 +69,6 @@ public class PoiDemo {
         System.out.println("[jexl] 500rows * 7cols start export, using template...");
         PoiUtil.exportForJxlsTemp("template11.xlsx", "test13.xlsx", datas);
         System.out.println("[jexl] 500rows * 7cols, 耗时:" + (System.currentTimeMillis() - startTime));
-    }
-
-    public static void testExcelTemplate2() {
-        System.out.println("[non] 500rows * 7cols data prepare...");
-        List<JxlsEntity> data1 = createJxlsDasta(500);
-//        Map<String, Object> datas = createJxlsTmpDatas(500);
-        long startTime = System.currentTimeMillis();
-        System.out.println("[non] 500rows * 7cols start export, using template...");
-        PoiUtil.exportForJxlsTemp1("template.xlsx", "test11.xlsx", data1);
-        System.out.println("[non] 500rows * 7cols, 耗时:" + (System.currentTimeMillis() - startTime));
     }
 
     public static void testExcelTemplate3(int size) {

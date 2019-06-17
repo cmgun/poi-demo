@@ -15,16 +15,6 @@ public class ExcelTemplateWriter {
 
     private ExcelJxlsTemplateBuilderImpl excelBuilder;
 
-    /**
-     * 构造器
-     *
-     * @param templateInputStream 模板excel，包含占位符
-     * @param outputStream 导出excel输出流
-     */
-    public ExcelTemplateWriter(InputStream templateInputStream, OutputStream outputStream) {
-        excelBuilder = new ExcelJxlsTemplateBuilderImpl(templateInputStream, outputStream);
-    }
-
     public ExcelTemplateWriter(InputStream templateInputStream, OutputStream out, Map<String, Object> datas) {
         excelBuilder = new ExcelJxlsTemplateBuilderImpl(templateInputStream, out, datas);
     }

@@ -78,11 +78,13 @@ public class ExcelJxlsTemplateBuilderImpl implements ExcelBuilder {
      */
     private JexlContext jexlContext = new MapContext();
 
-    public ExcelJxlsTemplateBuilderImpl(InputStream templateInputStream, OutputStream out) {
+    public ExcelJxlsTemplateBuilderImpl(InputStream templateInputStream, OutputStream out, Map<String, Object> datas) {
         // 只读取模板的前N-1列作为模板头固定列，第N列为模板占位符替换位置
         try {
             //初始化时候创建临时缓存目录，用于规避POI在并发写bug
             POITempFile.createPOIFilesDirectory();
+            // 初始化JexlContext，数据模板上下文
+            initJexlContext(datas);
             /*
             inputSteam只能读取一次，但SXSSFWorkbook使用滑动窗口方式进行遍历，已经遍历过的Cell无法再写。
             因此这里先将 inputStream 封装为 XSSFWorkbook，读取占位符行后再删除对应的行，最后生成 context 所需的 SXSSFWorkbook
@@ -103,13 +105,6 @@ public class ExcelJxlsTemplateBuilderImpl implements ExcelBuilder {
         }
     }
 
-
-    public ExcelJxlsTemplateBuilderImpl(InputStream templateInputStream, OutputStream out, Map<String, Object> datas) {
-        this(templateInputStream, out);
-        // 初始化JexlContext
-        initJexlContext(datas);
-    }
-
     /**
      * 读取模板文件最后一行的数据，然后清除最后一行，将 workbook 返回，writeContext 可直接使用该对象
      *
@@ -124,6 +119,8 @@ public class ExcelJxlsTemplateBuilderImpl implements ExcelBuilder {
         boolean hasReadAllHeadRows = false;
         // footer部分模板行数
         int footerRows = 0;
+        // Jexl解析引擎
+        JexlEngine jexlEngine = new JexlEngine();
         for (int i = sheet.getFirstRowNum(); i <= sheet.getLastRowNum(); i++) {
             Row row = sheet.getRow(i);
             if (!hasReadAllHeadRows) {
@@ -133,7 +130,7 @@ public class ExcelJxlsTemplateBuilderImpl implements ExcelBuilder {
                     // 包含占位符，模板头读取结束
                     hasReadAllHeadRows = true;
                     // 数据模板解析
-                    initCellTemplates(row);
+                    initCellTemplates(row, jexlEngine);
                     // 清除该行
                     sheet.removeRow(row);
                 }
@@ -141,7 +138,7 @@ public class ExcelJxlsTemplateBuilderImpl implements ExcelBuilder {
                 // 已经读完头部数据，剩下的行属于footer部分，记录后从sheet中清除
                 // 不能直接存Row对象，会被disconnect，因此只记录cell文字和格式
                 if (row != null) {
-                    footers.add(new FooterRow(row, footerRows));
+                    footers.add(new FooterRow(row, footerRows, jexlEngine, jexlContext));
                     sheet.removeRow(row);
                 }
                 footerRows++;
@@ -154,13 +151,12 @@ public class ExcelJxlsTemplateBuilderImpl implements ExcelBuilder {
     /**
      * 初始化数据读取模板
      * @param row 模板行
+     * @param jexlEngine 解析引擎
      */
-    private void initCellTemplates(Row row) {
+    private void initCellTemplates(Row row, JexlEngine jexlEngine) {
         // 数据模板开始写入的行数
         templateLastRowNum = row.getRowNum();
         int colSize = row.getLastCellNum();
-        // Jexl解析引擎
-        JexlEngine jexlEngine = new JexlEngine();
         for (int i = row.getFirstCellNum(); i < colSize; i++) {
             Cell cell = row.getCell(i);
             String cellTemplate = cell.getStringCellValue();

@@ -21,12 +21,9 @@ public class ExcelTemplateFactory extends EasyExcelFactory {
      *
      * @param temp 模板文件流
      * @param outputStream 导出目标文件流
-     * @return excel writer
+     * @param datas 数据模板上下文
+     * @return
      */
-    public static ExcelTemplateWriter getWriterWithTemp(InputStream temp, OutputStream outputStream) {
-        return new ExcelTemplateWriter(temp, outputStream);
-    }
-
     public static ExcelTemplateWriter getWriterWithTemp(InputStream temp, OutputStream outputStream, Map<String, Object> datas) {
         return new ExcelTemplateWriter(temp, outputStream, datas);
     }

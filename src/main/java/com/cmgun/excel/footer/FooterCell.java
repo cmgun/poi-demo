@@ -1,5 +1,9 @@
 package com.cmgun.excel.footer;
 
+import com.cmgun.excel.JxlsPlaceHolderUtils;
+import com.cmgun.excel.expression.JexlExpression;
+import org.apache.commons.jexl2.JexlContext;
+import org.apache.commons.jexl2.JexlEngine;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellStyle;
 
@@ -31,10 +35,15 @@ public class FooterCell {
      */
     private String cellValue;
 
-    public FooterCell(Cell cell) {
+    public FooterCell(Cell cell, JexlEngine jexlEngine, JexlContext jexlContext) {
         this.cellNum = cell.getColumnIndex();
         this.cellStyle = cell.getCellStyle();
-        this.cellValue = cell.getStringCellValue();
+        // 判断cellValue是否含有占位符
+        String cellContent = cell.getStringCellValue();
+        String cellExpression = JxlsPlaceHolderUtils.convertPlaceHolder(cellContent);
+        JexlExpression jexlExpression = new JexlExpression("${" + cellExpression + "}"
+                , jexlEngine.createExpression(cellExpression));
+        this.cellValue = JxlsPlaceHolderUtils.getCellValue(jexlExpression, jexlContext, cellContent).toString();
     }
 
     public int getCellNum() {

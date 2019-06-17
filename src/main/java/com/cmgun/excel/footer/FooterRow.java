@@ -1,5 +1,7 @@
 package com.cmgun.excel.footer;
 
+import org.apache.commons.jexl2.JexlContext;
+import org.apache.commons.jexl2.JexlEngine;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
 
@@ -21,7 +23,7 @@ public class FooterRow {
 
     private List<FooterCell> cells = new ArrayList<>();
 
-    public FooterRow(Row row, int footerRowNum) {
+    public FooterRow(Row row, int footerRowNum, JexlEngine jexlEngine, JexlContext jexlContext) {
         this.footerRowNum = footerRowNum;
         // 解析cell内容
         for (int i = row.getFirstCellNum(); i < row.getLastCellNum(); i++) {
@@ -30,7 +32,7 @@ public class FooterRow {
             if (cell == null) {
                 continue;
             }
-            cells.add(new FooterCell(cell));
+            cells.add(new FooterCell(cell, jexlEngine, jexlContext));
         }
     }
 

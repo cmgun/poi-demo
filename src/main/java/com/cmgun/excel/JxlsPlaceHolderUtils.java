@@ -48,11 +48,13 @@ public class JxlsPlaceHolderUtils {
      */
     private static final String TRANSLATE_UTIL = "translateUtil.getConstantName";
 
-
-
     public static Object getCellValue(JexlExpression jexlExpression, JexlContext context, String cellTemplate) {
         try {
             Object value = jexlExpression.getExpression().evaluate(context);
+            if (value == null) {
+                // 该模板是一个字符串，没有占位符
+                return cellTemplate;
+            }
             // 判断表达式前后是否有内容，如果有则转成String
             if (!cellTemplate.equals(jexlExpression.getOriginExpression())) {
                 // 有占位符以外的字符串，拼接
