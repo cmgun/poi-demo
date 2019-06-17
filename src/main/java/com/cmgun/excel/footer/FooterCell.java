@@ -1,5 +1,6 @@
 package com.cmgun.excel.footer;
 
+import com.alibaba.excel.util.StringUtils;
 import com.cmgun.excel.JxlsPlaceHolderUtils;
 import com.cmgun.excel.expression.JexlExpression;
 import org.apache.commons.jexl2.JexlContext;
@@ -41,9 +42,14 @@ public class FooterCell {
         // 判断cellValue是否含有占位符
         String cellContent = cell.getStringCellValue();
         String cellExpression = JxlsPlaceHolderUtils.convertPlaceHolder(cellContent);
-        JexlExpression jexlExpression = new JexlExpression("${" + cellExpression + "}"
-                , jexlEngine.createExpression(cellExpression));
-        this.cellValue = JxlsPlaceHolderUtils.getCellValue(jexlExpression, jexlContext, cellContent).toString();
+        // 表达式内容为空，不需要做引擎解析
+        if (StringUtils.isEmpty(cellExpression)) {
+            this.cellValue = cellContent;
+        } else {
+            JexlExpression jexlExpression = new JexlExpression("${" + cellExpression + "}"
+                    , jexlEngine.createExpression(cellExpression));
+            this.cellValue = JxlsPlaceHolderUtils.getCellValue(jexlExpression, jexlContext, cellContent).toString();
+        }
     }
 
     public int getCellNum() {
