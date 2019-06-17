@@ -1,5 +1,6 @@
 package com.cmgun.excel;
 
+import com.cmgun.excel.expression.JexlExpression;
 import com.cmgun.excel.footer.FooterCell;
 import com.cmgun.util.DateUtil;
 import com.cmgun.util.TranslateUtil;
@@ -48,9 +49,16 @@ public class JxlsPlaceHolderUtils {
     private static final String TRANSLATE_UTIL = "translateUtil.getConstantName";
 
 
-    public static Object getCellValue(Expression cellTemplate, JexlContext context) {
+
+    public static Object getCellValue(JexlExpression jexlExpression, JexlContext context, String cellTemplate) {
         try {
-            return cellTemplate.evaluate(context);
+            Object value = jexlExpression.getExpression().evaluate(context);
+            // 判断表达式前后是否有内容，如果有则转成String
+            if (!cellTemplate.equals(jexlExpression.getOriginExpression())) {
+                // 有占位符以外的字符串，拼接
+                return cellTemplate.replace("${" + jexlExpression.getExpression() + "}", value.toString());
+            }
+            return value;
         } catch (RuntimeException e) {
             // 解析异常
             e.printStackTrace();
@@ -77,7 +85,7 @@ public class JxlsPlaceHolderUtils {
     public static String convertPlaceHolder(String cellTemplate) {
         Matcher matcher = CELL_PLACE_HOLDER.matcher(cellTemplate);
         if (matcher.matches()) {
-            // 只会匹配一次
+            // 占位符以外的字符串直接拼接
             return matcher.group(1);
         }
         return "";

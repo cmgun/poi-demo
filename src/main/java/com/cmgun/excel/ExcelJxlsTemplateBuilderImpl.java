@@ -8,6 +8,7 @@ import com.alibaba.excel.util.POITempFile;
 import com.alibaba.excel.util.TypeUtil;
 import com.alibaba.excel.util.WorkBookUtil;
 import com.alibaba.excel.write.ExcelBuilder;
+import com.cmgun.excel.expression.JexlExpression;
 import com.cmgun.excel.footer.FooterCell;
 import com.cmgun.excel.footer.FooterRow;
 import net.sf.cglib.beans.BeanMap;
@@ -45,7 +46,7 @@ public class ExcelJxlsTemplateBuilderImpl implements ExcelBuilder {
     /**
      * 列模板表达式
      */
-    private List<Expression> cellJexlExpressions = new ArrayList<>();
+    private List<JexlExpression> cellJexlExpressions = new ArrayList<>();
 
     /**
      * 模板的footers
@@ -166,7 +167,9 @@ public class ExcelJxlsTemplateBuilderImpl implements ExcelBuilder {
             // 添加列模板
             cellTemplates.add(cellTemplate);
             // 添加列模板表达式
-            cellJexlExpressions.add(jexlEngine.createExpression(JxlsPlaceHolderUtils.convertPlaceHolder(cellTemplate)));
+            String cellExpression = JxlsPlaceHolderUtils.convertPlaceHolder(cellTemplate);
+            cellJexlExpressions.add(new JexlExpression("${" + cellExpression + "}"
+                    , jexlEngine.createExpression(cellExpression)));
             // 添加列模板样式
             cellStyles.add(cell.getCellStyle());
             // 列模板解析，获取反射字段
@@ -243,7 +246,8 @@ public class ExcelJxlsTemplateBuilderImpl implements ExcelBuilder {
         // 添加当前beanMap到Context中
         jexlContext.set("c", oneRowData);
         for (int i = 0; i < cellJexlExpressions.size(); i++) {
-            Object cellValue = JxlsPlaceHolderUtils.getCellValue(cellJexlExpressions.get(i), jexlContext);
+            // 解析jexl表达式
+            Object cellValue = JxlsPlaceHolderUtils.getCellValue(cellJexlExpressions.get(i), jexlContext, cellTemplates.get(i));
             WorkBookUtil.createCell(row, i, cellStyles.get(i), cellValue, TypeUtil.isNum(cellValue));
         }
     }

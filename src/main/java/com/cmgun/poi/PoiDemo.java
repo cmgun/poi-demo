@@ -20,7 +20,9 @@ public class PoiDemo {
 //        testExcelTemplate1();
 //        testExcelTemplate2();
         // 有求和操作
-        testExcelTemplate3(500);
+//        testExcelTemplate3(500);
+        // 占位符前后有内容，有求和footer，有数值类格式化
+        testExcelTemplate4(500);
 
 
         // 根据javaEntity的注解表头写入
@@ -84,6 +86,15 @@ public class PoiDemo {
         long startTime = System.currentTimeMillis();
         System.out.println("[jexl] testExcelTemplate3 start export, using template..., data size:" + size);
         PoiUtil.exportForJxlsTemp("template12.xlsx", "test14.xlsx", datas);
+        System.out.println("[jexl] 500rows * 7cols, 耗时:" + (System.currentTimeMillis() - startTime));
+    }
+
+    public static void testExcelTemplate4(int size) {
+        System.out.println("[jexl] testExcelTemplate4 data prepare...");
+        Map<String, Object> datas = createJxlsTmpDatas(size);
+        long startTime = System.currentTimeMillis();
+        System.out.println("[jexl] testExcelTemplate4 start export, using template..., data size:" + size);
+        PoiUtil.exportForJxlsTemp("template13.xlsx", "test15.xlsx", datas);
         System.out.println("[jexl] 500rows * 7cols, 耗时:" + (System.currentTimeMillis() - startTime));
     }
 
