@@ -12,7 +12,6 @@ import com.cmgun.excel.expression.JexlExpression;
 import com.cmgun.excel.footer.FooterCell;
 import com.cmgun.excel.footer.FooterRow;
 import net.sf.cglib.beans.BeanMap;
-import org.apache.commons.jexl2.Expression;
 import org.apache.commons.jexl2.JexlContext;
 import org.apache.commons.jexl2.JexlEngine;
 import org.apache.commons.jexl2.MapContext;
