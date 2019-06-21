@@ -123,6 +123,7 @@ public class ExcelJxlsTemplateBuilderImpl implements ExcelBuilder {
         for (int i = sheet.getFirstRowNum(); i <= sheet.getLastRowNum(); i++) {
             Row row = sheet.getRow(i);
             if (!hasReadAllHeadRows) {
+                // 清除单元格的备注
                 Cell cell = row.getCell(0);
                 // 还未读完模板头部，判断第一个cell是否包含占位符
                 if (cell != null && JxlsPlaceHolderUtils.isPlaceHolderCell(cell.getStringCellValue())) {
@@ -132,6 +133,9 @@ public class ExcelJxlsTemplateBuilderImpl implements ExcelBuilder {
                     initCellTemplates(row, jexlEngine);
                     // 清除该行
                     sheet.removeRow(row);
+                } else {
+                    // 清除备注信息
+                    removeRowComments(row);
                 }
             } else{
                 // 已经读完头部数据，剩下的行属于footer部分，记录后从sheet中清除
@@ -145,6 +149,24 @@ public class ExcelJxlsTemplateBuilderImpl implements ExcelBuilder {
         }
         // 封装为 SXSSFWorkbook 后返回
         return new SXSSFWorkbook(workbook);
+    }
+
+    /**
+     * 清除row里的单元格备注信息
+     *
+     * @param row 行
+     */
+    private void removeRowComments(Row row) {
+        if (row == null) {
+            return;
+        }
+        int colSize = row.getLastCellNum();
+        for (int i = row.getFirstCellNum(); i < colSize; i++) {
+            Cell cell = row.getCell(i);
+            if (cell != null) {
+                cell.removeCellComment();
+            }
+        }
     }
 
     /**
