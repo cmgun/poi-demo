@@ -33,13 +33,24 @@ public class PoiDemo {
 //        testEasyExcelTemplate();
 
         // 读Excel到javaBean中
-        read1();
+//        read1();
+        read2();
     }
 
     private static void read1() {
         System.out.println("start");
         List<Entity> result = PoiUtil.readExcel("testJavaBean1.xlsx", 1);
         for (Object o : result) {
+            System.out.println(o);
+        }
+        System.out.println("finish");
+    }
+
+    private static void read2() {
+        System.out.println("start");
+        ExcelReadListener listener = new ExcelReadListener();
+        PoiUtil.readExcel("testJavaBean1.xlsx", 1, listener);
+        for (Object o : listener.getDatas()) {
             System.out.println(o);
         }
         System.out.println("finish");

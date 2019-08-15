@@ -3,6 +3,7 @@ package com.cmgun.poi;
 
 import com.alibaba.excel.EasyExcelFactory;
 import com.alibaba.excel.ExcelWriter;
+import com.alibaba.excel.event.AnalysisEventListener;
 import com.alibaba.excel.metadata.BaseRowModel;
 import com.alibaba.excel.metadata.Sheet;
 import com.alibaba.excel.support.ExcelTypeEnum;
@@ -37,6 +38,19 @@ public class PoiUtil {
         }
         return data;
     }
+
+    public static void readExcel(String fileName, int headLineMun, AnalysisEventListener listener) {
+        InputStream inputStream = null;
+        try {
+            inputStream = getResourcesFileInputStream(fileName);
+            EasyExcelFactory.readBySax(inputStream, new Sheet(1, headLineMun, Entity.class), listener);
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            closeInputStream(inputStream);
+        }
+    }
+
 
     /**
      * EasyExcel 无模板导出
