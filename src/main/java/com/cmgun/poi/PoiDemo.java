@@ -23,13 +23,26 @@ public class PoiDemo {
         // 有求和操作
 //        testExcelTemplate3(500);
         // 占位符前后有内容，有求和footer，有数值类格式化
-        testExcelTemplate4(500);
+//        testExcelTemplate4(500);
 
 
         // 根据javaEntity的注解表头写入
+//        testJavaBeanTemplate();
 //        testAnnotationTemplate();
         // 模板样式
 //        testEasyExcelTemplate();
+
+        // 读Excel到javaBean中
+        read1();
+    }
+
+    private static void read1() {
+        System.out.println("start");
+        List<Entity> result = PoiUtil.readExcel("testJavaBean1.xlsx", 1);
+        for (Object o : result) {
+            System.out.println(o);
+        }
+        System.out.println("finish");
     }
 
     private static List<Entity> createData(int length) {
@@ -97,6 +110,13 @@ public class PoiDemo {
         System.out.println("500rows * 5cols start export...");
         PoiUtil.export("template1.xslx", "test2.xlsx", data2, 3);
         System.out.println("500rows * 5cols, 耗时:" + (System.currentTimeMillis() - startTime1));
+    }
+
+    public static void testJavaBeanTemplate() {
+        System.out.println("start");
+        List<Entity> data = createData(10);
+        PoiUtil.exportWithHandler("testJavaBean1.xlsx", data);
+        System.out.println("finish");
     }
 
     /**

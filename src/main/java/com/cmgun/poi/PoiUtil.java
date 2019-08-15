@@ -6,18 +6,37 @@ import com.alibaba.excel.ExcelWriter;
 import com.alibaba.excel.metadata.BaseRowModel;
 import com.alibaba.excel.metadata.Sheet;
 import com.alibaba.excel.support.ExcelTypeEnum;
-import com.cmgun.excel.ExcelTemplateFactory;
-import com.cmgun.excel.ExcelTemplateWriter;
+import com.cmgun.excel.extend.CellStyleHandler;
+import com.cmgun.excel.template.ExcelTemplateFactory;
+import com.cmgun.excel.template.ExcelTemplateWriter;
 import org.apache.poi.util.IOUtils;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 public class PoiUtil {
+
+    public static List<Entity> readExcel(String fileName, int headLineMun) {
+        InputStream inputStream = null;
+        List<Entity> data = new ArrayList<>();
+        try {
+            inputStream = getResourcesFileInputStream(fileName);
+            List<Object> rawData = EasyExcelFactory.read(inputStream, new Sheet(1, headLineMun, Entity.class));
+            for (Object o : rawData) {
+                data.add((Entity) o);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            closeInputStream(inputStream);
+        }
+        return data;
+    }
 
     /**
      * EasyExcel 无模板导出
@@ -31,6 +50,32 @@ public class PoiUtil {
         try {
             out = new FileOutputStream(targetFileName);
             writer = EasyExcelFactory.getWriter(out, ExcelTypeEnum.XLSX,true);
+            Sheet sheet1 = new Sheet(1, 0, Entity.class, "第一个sheet", null);
+            sheet1.setStartRow(0);
+            writer.write(datas, sheet1);
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            // 关闭资源
+            if (writer != null) {
+                writer.finish();
+            }
+            closeOutputStream(out);
+        }
+    }
+
+    /**
+     * EasyExcel 无模板导出，扩展单元格样式
+     *
+     * @param targetFileName
+     * @param datas
+     */
+    public static void exportWithHandler(String targetFileName, List<? extends BaseRowModel> datas) {
+        OutputStream out = null;
+        ExcelWriter writer = null;
+        try {
+            out = new FileOutputStream(targetFileName);
+            writer = EasyExcelFactory.getWriterWithTempAndHandler(null, out, ExcelTypeEnum.XLSX, true, new CellStyleHandler<>(Entity.class));
             Sheet sheet1 = new Sheet(1, 0, Entity.class, "第一个sheet", null);
             sheet1.setStartRow(0);
             writer.write(datas, sheet1);
@@ -108,6 +153,16 @@ public class PoiUtil {
         try {
             if (out != null) {
                 out.close();
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private static void closeInputStream(InputStream in) {
+        try {
+            if (in != null) {
+                in.close();
             }
         } catch (IOException e) {
             e.printStackTrace();

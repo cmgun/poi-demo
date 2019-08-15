@@ -2,29 +2,40 @@ package com.cmgun.poi;
 
 import com.alibaba.excel.annotation.ExcelProperty;
 import com.alibaba.excel.metadata.BaseRowModel;
+import com.cmgun.excel.extend.CellStyleEnum;
+import com.cmgun.excel.extend.ExcelCellStyle;
 
+import java.math.BigDecimal;
 import java.util.Date;
 
 public class Entity extends BaseRowModel {
 
-    @ExcelProperty(value = {"id"})
+    @ExcelProperty(index = 0, value = {"id"})
     private long id;
 
-    @ExcelProperty(value = {"msg"})
+    @ExcelProperty(index = 1, value = {"msg"})
     private String msg;
 
-    @ExcelProperty(value = {"msg1"})
+    @ExcelProperty(index = 2, value = {"msg1"})
     private String msg1;
 
-    @ExcelProperty(value = {"msg2"})
+    @ExcelProperty(index = 3, value = {"msg2"})
     private String msg2;
 
-    @ExcelProperty(value = {"createDate"}, format = "yyyy-MM-dd")
+    @ExcelProperty(index = 4, value = {"money"})
+    @ExcelCellStyle(cellStyle = CellStyleEnum.MONEY, format = "#,##0.00")
+    private BigDecimal money;
+
+    @ExcelProperty(index = 5, value = {"createDate"}, format = "yyyy-MM-dd")
+    @ExcelCellStyle(cellStyle = CellStyleEnum.DATE, format = "yyyy-MM-dd")
     private Date createDate;
 
     private String strCreateDate;
 
     private String constantVal;
+
+    public Entity() {
+    }
 
     public Entity(long id, String msg, String constantVal) {
         this.id = id;
@@ -32,6 +43,7 @@ public class Entity extends BaseRowModel {
         this.msg1 = "msgmsgmsgmsgmsgaaaaaaaaaaa" + "1";
         this.msg2 = "msgmsgmsgmsgmsgaaaaabbbbbb"  + "2";
         this.createDate = new Date();
+        this.money = new BigDecimal("1000000.12");
         this.strCreateDate = "2020-12-12 12:12:12";
         this.constantVal = constantVal;
     }
@@ -90,5 +102,27 @@ public class Entity extends BaseRowModel {
 
     public void setConstantVal(String constantVal) {
         this.constantVal = constantVal;
+    }
+
+    public BigDecimal getMoney() {
+        return money;
+    }
+
+    public void setMoney(BigDecimal money) {
+        this.money = money;
+    }
+
+    @Override
+    public String toString() {
+        return "Entity{" +
+                "id=" + id +
+                ", msg='" + msg + '\'' +
+                ", msg1='" + msg1 + '\'' +
+                ", msg2='" + msg2 + '\'' +
+                ", money=" + money +
+                ", createDate=" + createDate +
+                ", strCreateDate='" + strCreateDate + '\'' +
+                ", constantVal='" + constantVal + '\'' +
+                '}';
     }
 }

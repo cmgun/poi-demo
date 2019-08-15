@@ -28,4 +28,14 @@ public class DateUtil {
         }
         return "";
     }
+
+    public static Date format(String dateString, String format) {
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat(format);
+        try {
+            return simpleDateFormat.parse(dateString);
+        } catch (ParseException e) {
+            System.err.println(e);
+        }
+        return null;
+    }
 }

@@ -1,4 +1,4 @@
-package com.cmgun.excel;
+package com.cmgun.excel.template;
 
 import com.alibaba.excel.exception.ExcelGenerateException;
 import com.alibaba.excel.metadata.Sheet;
@@ -8,9 +8,9 @@ import com.alibaba.excel.util.POITempFile;
 import com.alibaba.excel.util.TypeUtil;
 import com.alibaba.excel.util.WorkBookUtil;
 import com.alibaba.excel.write.ExcelBuilder;
-import com.cmgun.excel.expression.JexlExpression;
-import com.cmgun.excel.footer.FooterCell;
-import com.cmgun.excel.footer.FooterRow;
+import com.cmgun.excel.template.expression.JexlExpression;
+import com.cmgun.excel.template.footer.FooterCell;
+import com.cmgun.excel.template.footer.FooterRow;
 import net.sf.cglib.beans.BeanMap;
 import org.apache.commons.jexl2.JexlContext;
 import org.apache.commons.jexl2.JexlEngine;

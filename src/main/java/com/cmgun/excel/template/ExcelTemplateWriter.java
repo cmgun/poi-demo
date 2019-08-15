@@ -1,4 +1,4 @@
-package com.cmgun.excel;
+package com.cmgun.excel.template;
 
 import java.io.InputStream;
 import java.io.OutputStream;

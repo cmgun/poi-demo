@@ -1,4 +1,4 @@
-package com.cmgun.excel;
+package com.cmgun.excel.template;
 
 import com.alibaba.excel.metadata.BaseRowModel;
 import com.alibaba.excel.metadata.ExcelHeadProperty;
