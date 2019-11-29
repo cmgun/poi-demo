@@ -7,6 +7,7 @@ import com.cmgun.util.DateUtil;
 import org.apache.poi.ss.usermodel.*;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -51,6 +52,9 @@ public class CellStyleHandler<T extends Class<? extends BaseRowModel>> implement
         Field[] declaredFields = rowModel.getDeclaredFields();
         int colNum = 0;
         for (Field field : declaredFields) {
+            if (Modifier.isFinal(field.getModifiers()) || Modifier.isStatic(field.getModifiers())) {
+                continue;
+            }
             ExcelCellStyle excelCellStyle = field.getAnnotation(ExcelCellStyle.class);
             ExcelProperty excelProperty = field.getAnnotation(ExcelProperty.class);
             if (excelCellStyle != null && excelProperty != null) {
